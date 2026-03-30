@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Honeymoon Expenses</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #1a1a1a;
+      background: #f5f5f5;
+    }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+
+    .header { margin-bottom: 2rem; }
+    .header h1 { font-size: 28px; font-weight: 500; margin-bottom: 0.5rem; }
+    .header p { color: #666; font-size: 14px; }
+
+    .loading { text-align: center; padding: 2rem; color: #999; }
+
+    .stats-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 2rem; }
+
+    .stat-card { 
+      background: white; 
+      padding: 1.5rem; 
+      border-radius: 12px;
+      border: 1px solid #e0e0e0;
+    }
+    .stat-card .label { font-size: 13px; color: #666; font-weight: 500; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card .value { font-size: 28px; font-weight: 500; }
+
+    .settlement-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+
+    .settlement-card { 
+      background: white; 
+      padding: 1.5rem; 
+      border-radius: 12px;
+      border: 2px solid #e0e0e0;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .settlement-card.empty {
+      opacity: 0.5;
+    }
+
+    .settlement-card .label { font-size: 13px; color: #666; font-weight: 500; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .settlement-card .amount { font-size: 24px; font-weight: 500; color: #2ecc71; }
+
+    .settlement-card.empty .amount {
+      color: #999;
+    }
+
+    .section { margin-bottom: 2rem; }
+    .section h2 { font-size: 18px; font-weight: 500; margin-bottom: 1rem; }
+    .section .subtitle { font-size: 13px; color: #999; margin-bottom: 1rem; font-style: italic; }
+
+    .filter-controls { 
+      display: flex; 
+      gap: 1rem; 
+      margin-bottom: 1.5rem;
+      align-items: center;
+    }
+
+    .filter-btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: white;
+      color: #1a1a1a;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .filter-btn.active {
+      background: #f0f0f0;
+      border-color: #999;
+    }
+
+    .filter-btn:hover {
+      border-color: #999;
+    }
+
+    .category-list { display: grid; gap: 0.75rem; }
+    .category-item { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      padding: 1rem;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+    }
+    .category-item .name { flex: 1; }
+    .category-item .amount { font-weight: 500; text-align: right; min-width: 80px; }
+
+    .expense-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #e0e0e0; }
+    .expense-table thead { background: #f9f9f9; }
+    .expense-table th { 
+      padding: 1rem; 
+      text-align: left; 
+      font-size: 13px; 
+      font-weight: 500;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .expense-table td { 
+      padding: 0.875rem 1rem; 
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 14px;
+    }
+    .expense-table tbody tr:hover { background: #fafafa; }
+    .expense-table tr.settled-row { opacity: 0.65; }
+
+    .tag { 
+      display: inline-block;
+      padding: 0.25rem 0.75rem; 
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .tag-gem { background: rgba(100, 150, 255, 0.15); color: #1a1a1a; }
+    .tag-tuang { background: rgba(255, 150, 100, 0.15); color: #1a1a1a; }
+    .tag-split { background: rgba(100, 200, 100, 0.15); color: #1a1a1a; }
+    .tag-settled { background: rgba(150, 150, 150, 0.15); color: #666; }
+    .tag-unsettled { background: rgba(255, 180, 100, 0.15); color: #1a1a1a; }
+
+    .payer-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+    .payer-card { background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #e0e0e0; }
+    .payer-card .name { font-size: 14px; color: #666; margin-bottom: 0.5rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    .payer-card .total { font-size: 24px; font-weight: 500; }
+    .payer-card .breakdown { font-size: 12px; color: #999; margin-top: 0.75rem; line-height: 1.6; }
+
+    .error { color: #e74c3c; padding: 1rem; background: #fadbd8; border-radius: 8px; border: 1px solid #e74c3c; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>Honeymoon Expenses</h1>
+    <p>Amalfi Coast, May 2026</p>
+  </div>
+
+  <div id="content">
+    <div class="loading">Loading expenses...</div>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx3g8i4h2GihS_22BZ0oSdjtKD3E2DTWU1nDGNdqI1pSLyAwSY5R7HqP8SIDODgC3RbYw/exec';
+
+async function loadData() {
+  try {
+    const response = await fetch(APPS_SCRIPT_URL);
+    const data = await response.json();
+    renderDashboard(data);
+  } catch (error) {
+    document.getElementById('content').innerHTML = `<div class="error">Error loading data: ${error.message}</div>`;
+  }
+}
+
+function renderDashboard(data) {
+  const formatCurrency = (num) => '฿' + parseFloat(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  
+  let html = `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">Total Spent</div>
+        <div class="value">${formatCurrency(data.totalSpent)}</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Settlement (50/50 splits only)</h2>
+      <div class="settlement-grid">
+  `;
+
+  if (data.settlement.gemOwes) {
+    html += `
+      <div class="settlement-card">
+        <div class="label">Gem Owes</div>
+        <div class="amount">${formatCurrency(data.settlement.gemOwes)}</div>
+      </div>
+      <div class="settlement-card empty">
+        <div class="label">Tuang Owes</div>
+        <div class="amount">—</div>
+      </div>
+    `;
+  } else if (data.settlement.tuangOwes) {
+    html += `
+      <div class="settlement-card empty">
+        <div class="label">Gem Owes</div>
+        <div class="amount">—</div>
+      </div>
+      <div class="settlement-card">
+        <div class="label">Tuang Owes</div>
+        <div class="amount">${formatCurrency(data.settlement.tuangOwes)}</div>
+      </div>
+    `;
+  } else {
+    html += `
+      <div class="settlement-card empty">
+        <div class="label">Gem Owes</div>
+        <div class="amount">—</div>
+      </div>
+      <div class="settlement-card empty">
+        <div class="label">Tuang Owes</div>
+        <div class="amount">—</div>
+      </div>
+    `;
+  }
+
+  html += `
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Total expenses paid</h2>
+      <div class="subtitle">Includes personal expenses + your share of 50/50 splits</div>
+      <div class="payer-breakdown">
+        <div class="payer-card">
+          <div class="name">Gem (You)</div>
+          <div class="total">${formatCurrency(data.expensesPaid.gem.total)}</div>
+          <div class="breakdown">
+            Personal: ${formatCurrency(data.expensesPaid.gem.personal)}<br>
+            50/50 share: ${formatCurrency(data.expensesPaid.gem.split50Share)}
+          </div>
+        </div>
+        <div class="payer-card">
+          <div class="name">Tuang</div>
+          <div class="total">${formatCurrency(data.expensesPaid.tuang.total)}</div>
+          <div class="breakdown">
+            Personal: ${formatCurrency(data.expensesPaid.tuang.personal)}<br>
+            50/50 share: ${formatCurrency(data.expensesPaid.tuang.split50Share)}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Spending by category (unsettled)</h2>
+      <div class="category-list">
+  `;
+
+  data.categoryBreakdown.forEach(cat => {
+    html += `
+      <div class="category-item">
+        <div class="name">${cat.category}</div>
+        <div class="amount">${formatCurrency(cat.amount)}</div>
+      </div>
+    `;
+  });
+
+  html += `
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>All expenses</h2>
+      <div class="filter-controls">
+        <span style="font-size: 14px; color: #666; font-weight: 500;">Filter:</span>
+        <button class="filter-btn active" onclick="filterExpenses('all')">All</button>
+        <button class="filter-btn" onclick="filterExpenses('unsettled')">Unsettled</button>
+        <button class="filter-btn" onclick="filterExpenses('settled')">Settled</button>
+      </div>
+      <table class="expense-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Amount</th>
+            <th>Paid by</th>
+            <th>Type</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="expenseBody">
+  `;
+
+  data.allExpenses.forEach(exp => {
+    const rowClass = exp.settled ? 'settled-row' : 'unsettled-row';
+    const typeTag = exp.type === '50/50' ? 'tag-split' : (exp.type === 'Gem' ? 'tag-gem' : 'tag-tuang');
+    const statusTag = exp.settled ? 'tag-settled' : 'tag-unsettled';
+    const statusText = exp.settled ? 'Yes' : 'No';
+    
+    html += `
+      <tr class="${rowClass}">
+        <td>${exp.date}</td>
+        <td>${exp.description}</td>
+        <td>${exp.category}</td>
+        <td>${formatCurrency(exp.amount)}</td>
+        <td>${exp.paidBy}</td>
+        <td><span class="tag ${typeTag}">${exp.type}</span></td>
+        <td><span class="tag ${statusTag}">${statusText}</span></td>
+      </tr>
+    `;
+  });
+
+  html += `
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  document.getElementById('content').innerHTML = html;
+}
+
+function filterExpenses(filter) {
+  const rows = document.querySelectorAll('#expenseBody tr');
+  rows.forEach(row => {
+    if (filter === 'all') {
+      row.style.display = '';
+    } else if (filter === 'unsettled') {
+      row.style.display = row.classList.contains('unsettled-row') ? '' : 'none';
+    } else if (filter === 'settled') {
+      row.style.display = row.classList.contains('settled-row') ? '' : 'none';
+    }
+  });
+
+  document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+loadData();
+</script>
+
+</body>
+</html>
