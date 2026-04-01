@@ -200,6 +200,26 @@
         </div>
       </div>
       
+      <!-- QOL Items Breakdown Table -->
+      <div class="chart-card">
+        <div class="chart-title">QOL Items Breakdown</div>
+        <div style="overflow-x: auto; max-height: 400px; overflow-y: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #e0e0e0;">
+            <thead style="position: sticky; top: 0; background: rgba(0,153,255,0.1);">
+              <tr>
+                <th style="padding: 12px 8px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #fff;">Category</th>
+                <th style="padding: 12px 8px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #fff;">Monthly Cost</th>
+              </tr>
+            </thead>
+            <tbody id="qolTableBody">
+              <tr>
+                <td colspan="2" style="text-align: center; padding: 20px; color: #999;">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
       <!-- Discretionary Trend -->
       <div class="chart-card full-width">
         <div class="chart-title">Discretionary Income Trend</div>
@@ -223,26 +243,6 @@
         <div class="chart-title" id="drilldownTitle">Category Details</div>
         <div class="chart-container">
           <canvas id="drilldownChart"></canvas>
-        </div>
-      </div>
-      
-      <!-- QOL Items Breakdown Table -->
-      <div class="chart-card">
-        <div class="chart-title">QOL Items Breakdown</div>
-        <div style="overflow-x: auto; max-height: 400px; overflow-y: auto;">
-          <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #e0e0e0;">
-            <thead style="position: sticky; top: 0; background: rgba(0,153,255,0.1);">
-              <tr>
-                <th style="padding: 12px 8px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #fff;">Category</th>
-                <th style="padding: 12px 8px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #fff;">Monthly Cost</th>
-              </tr>
-            </thead>
-            <tbody id="qolTableBody">
-              <tr>
-                <td colspan="2" style="text-align: center; padding: 20px; color: #999;">Loading...</td>
-              </tr>
-            </tbody>
-          </table>
         </div>
       </div>
     </div>
