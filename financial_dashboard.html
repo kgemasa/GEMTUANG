@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Financial Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f9fafb;
+      color: #1f2937;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      color: #111827;
+    }
+    
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 2rem 0 1.5rem 0;
+      color: #111827;
+    }
+    
+    h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #374151;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    
+    label {
+      font-size: 0.875rem;
+      color: #6b7280;
+      font-weight: 500;
+    }
+    
+    select {
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem;
+      border: 1px solid #d1d5db;
+      font-size: 0.875rem;
+      background: white;
+      cursor: pointer;
+    }
+    
+    #loadingMsg {
+      color: #6b7280;
+      padding: 2rem;
+      text-align: center;
+    }
+    
+    #dashboard {
+      display: none;
+    }
+    
+    .section {
+      margin-bottom: 2.5rem;
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      padding: 1rem;
+    }
+    
+    .card.info {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+    }
+    
+    .card-label {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+    
+    .card-label.info {
+      color: #0369a1;
+    }
+    
+    .card-value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #111827;
+    }
+    
+    .card-value.info {
+      color: #0369a1;
+    }
+    
+    input[type="number"] {
+      width: 100%;
+      padding: 0.5rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      background: white;
+      font-family: inherit;
+    }
+    
+    input[type="number"]:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    input[type="text"] {
+      padding: 0.5rem;
+      font-size: 0.875rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      font-family: inherit;
+    }
+    
+    .subsection {
+      border: 1px solid #e5e7eb;
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .subsection-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .subsection-card {
+      background: #f3f4f6;
+      padding: 0.75rem;
+      border-radius: 0.375rem;
+    }
+    
+    .subsection-label {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+    }
+    
+    .item-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .item-card {
+      background: #f3f4f6;
+      padding: 0.75rem;
+      border-radius: 0.375rem;
+    }
+    
+    .item-name {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-bottom: 0.4rem;
+    }
+    
+    .item-amount {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #111827;
+    }
+    
+    .subtotal {
+      margin-top: 1rem;
+      font-size: 0.875rem;
+      color: #6b7280;
+      font-weight: 500;
+    }
+    
+    button {
+      padding: 0.5rem 1rem;
+      font-size: 0.8125rem;
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s;
+    }
+    
+    button:hover {
+      background: #e5e7eb;
+    }
+    
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    
+    .summary-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      padding: 1.25rem;
+    }
+    
+    .summary-label {
+      font-size: 0.8125rem;
+      color: #6b7280;
+      margin-bottom: 0.5rem;
+    }
+    
+    .summary-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #111827;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+      
+      h1 {
+        font-size: 1.5rem;
+      }
+      
+      h2 {
+        font-size: 1rem;
+        margin: 1.5rem 0 1rem 0;
+      }
+      
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Financial Dashboard</h1>
+  
+  <div class="controls">
+    <label for="monthSelect">Month:</label>
+    <select id="monthSelect" onchange="loadDashboard()">
+      <option value="">Loading...</option>
+    </select>
+  </div>
+  
+  <div id="loadingMsg">Loading your data...</div>
+  
+  <div id="dashboard">
+    <!-- INCOME SECTION -->
+    <div class="section">
+      <h2>Income</h2>
+      <div class="grid">
+        <div class="card">
+          <div class="card-label">Salary</div>
+          <input type="number" id="salary" placeholder="0" onchange="updateField('updateSalary')">
+        </div>
+        <div class="card">
+          <div class="card-label">Property Rentals</div>
+          <input type="number" id="rentals" placeholder="0" onchange="updateField('updateRentals')">
+        </div>
+        <div class="card">
+          <div class="card-label">Dividends</div>
+          <input type="number" id="dividends" placeholder="0" onchange="updateField('updateDividends')">
+        </div>
+        <div class="card info">
+          <div class="card-label info">Total Income</div>
+          <div class="card-value info" id="totalIncome">฿0</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- FIXED COSTS SECTION -->
+    <div class="section">
+      <h2>Fixed Costs</h2>
+      
+      <!-- Financial Freedom -->
+      <div class="subsection">
+        <h3>Financial Freedom</h3>
+        <div class="subsection-grid">
+          <div class="subsection-card">
+            <div class="subsection-label">Crypto</div>
+            <input type="number" id="crypto" value="15000" readonly>
+          </div>
+          <div class="subsection-card">
+            <div class="subsection-label">Joint Account</div>
+            <input type="number" id="jointAccount" value="15000" readonly>
+          </div>
+          <div class="subsection-card" style="background: #dbeafe;">
+            <div class="subsection-label" style="color: #0369a1;">Subtotal</div>
+            <div style="font-size: 1rem; font-weight: 600; color: #0369a1;" id="ffSubtotal">฿30,000</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Marriage Expense -->
+      <div class="subsection">
+        <h3>Marriage Expense</h3>
+        <div class="subsection-grid">
+          <div class="subsection-card">
+            <div class="subsection-label">Monthly</div>
+            <input type="number" id="marriageExp" value="15000" onchange="updateField('updateMarriageExp')">
+          </div>
+        </div>
+      </div>
+      
+      <!-- Food Budget -->
+      <div class="subsection">
+        <h3>Food Budget</h3>
+        <div class="subsection-grid">
+          <div class="subsection-card">
+            <div class="subsection-label">Monthly</div>
+            <input type="number" id="foodBudget" value="25000" onchange="updateField('updateFoodBudget')">
+          </div>
+        </div>
+      </div>
+      
+      <!-- Subscriptions -->
+      <div class="subsection">
+        <h3>Subscriptions</h3>
+        <div class="item-list" id="subscriptionsList"></div>
+        <button onclick="addSubscription()">+ Add Subscription</button>
+        <div class="subtotal" id="subsTotal">Subtotal: ฿0</div>
+      </div>
+      
+      <!-- Quality of Life -->
+      <div class="subsection">
+        <h3>Quality of Life</h3>
+        <div class="item-list" id="qolList"></div>
+        <button onclick="addQOL()">+ Add Item</button>
+        <div class="subtotal" id="qolTotal">Subtotal: ฿0</div>
+      </div>
+      
+      <!-- Other Expenses -->
+      <div class="subsection">
+        <h3>Other Expenses</h3>
+        <div class="item-list" id="otherList"></div>
+        <button onclick="addOther()">+ Add Item</button>
+        <div class="subtotal" id="otherTotal">Subtotal: ฿0</div>
+      </div>
+    </div>
+    
+    <!-- SUMMARY SECTION -->
+    <div class="section">
+      <h2>Summary</h2>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-label">Total Fixed Costs</div>
+          <div class="summary-value" id="totalFixedCosts">฿0</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Discretionary Savings</div>
+          <div class="summary-value" id="discretionaryAmount" style="color: #059669;">฿0</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Disposable Income</div>
+          <div class="summary-value" id="disposableIncome" style="color: #d97706;">฿0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8nJVKDaTZJCLxoiKYk8Vk3a23m2Qzaqy3Q0vWzMnndXr-h-nxjqcX8X6mfWSWVaRC/exec';
+let currentMonth = null;
+let monthData = null;
+let subscriptions = [];
+let qolItems = [];
+let otherExpenses = [];
+
+async function callAppsScript(functionName, params = {}) {
+  try {
+    const url = new URL(APPS_SCRIPT_URL);
+    url.searchParams.append('function', functionName);
+    Object.keys(params).forEach(key => {
+      url.searchParams.append(key, JSON.stringify(params[key]));
+    });
+    
+    const response = await fetch(url, {method: 'GET'});
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text;
+    }
+  } catch (error) {
+    console.error('Error calling Apps Script:', error);
+    return null;
+  }
+}
+
+async function initMonths() {
+  const months = await callAppsScript('getMonths');
+  const select = document.getElementById('monthSelect');
+  select.innerHTML = '';
+  
+  if (months && Array.isArray(months)) {
+    months.forEach(month => {
+      const opt = document.createElement('option');
+      opt.value = month;
+      opt.textContent = formatMonth(month);
+      select.appendChild(opt);
+    });
+    
+    if (months.length > 0) {
+      select.value = months[0];
+      currentMonth = months[0];
+      loadDashboard();
+    }
+  }
+}
+
+function formatMonth(monthStr) {
+  const [year, month] = monthStr.split('-');
+  const date = new Date(year, parseInt(month) - 1);
+  return date.toLocaleDateString('en-US', {year: 'numeric', month: 'long'});
+}
+
+async function loadDashboard() {
+  const month = document.getElementById('monthSelect').value;
+  if (!month) return;
+  
+  currentMonth = month;
+  document.getElementById('loadingMsg').style.display = 'block';
+  document.getElementById('dashboard').style.display = 'none';
+  
+  const data = await callAppsScript('getMonthData', {month});
+  subscriptions = await callAppsScript('getSubscriptions', {month}) || [];
+  qolItems = await callAppsScript('getQOLItems', {month}) || [];
+  otherExpenses = await callAppsScript('getOtherExpenses', {month}) || [];
+  
+  if (data) {
+    monthData = data;
+    document.getElementById('salary').value = data.salary || 0;
+    document.getElementById('rentals').value = data.rentals || 0;
+    document.getElementById('dividends').value = data.dividends || 0;
+    document.getElementById('marriageExp').value = data.marriage_exp || 15000;
+    document.getElementById('foodBudget').value = data.food_budget || 25000;
+    
+    renderSubscriptions();
+    renderQOL();
+    renderOther();
+    recalculate();
+    
+    document.getElementById('loadingMsg').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+  }
+}
+
+function renderSubscriptions() {
+  const list = document.getElementById('subscriptionsList');
+  list.innerHTML = subscriptions.map((sub, i) => `
+    <div class="item-card">
+      <div class="item-name">${sub.name}</div>
+      <div class="item-amount">฿${Math.round(parseFloat(sub.cost) || 0).toLocaleString()}</div>
+      <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 0.25rem;">${sub.billing}</div>
+    </div>
+  `).join('');
+  updateSubsTotal();
+}
+
+function renderQOL() {
+  const list = document.getElementById('qolList');
+  list.innerHTML = qolItems.map(item => `
+    <div class="item-card">
+      <div class="item-name">${item.name}</div>
+      <div class="item-amount">฿${Math.round(parseFloat(item.cost) || 0).toLocaleString()}</div>
+    </div>
+  `).join('');
+  updateQOLTotal();
+}
+
+function renderOther() {
+  const list = document.getElementById('otherList');
+  list.innerHTML = otherExpenses.map(item => `
+    <div class="item-card">
+      <div class="item-name">${item.name}</div>
+      <div class="item-amount">฿${Math.round(parseFloat(item.cost) || 0).toLocaleString()}</div>
+    </div>
+  `).join('');
+  updateOtherTotal();
+}
+
+function updateSubsTotal() {
+  const total = subscriptions.reduce((sum, sub) => sum + (parseFloat(sub.cost) || 0), 0);
+  document.getElementById('subsTotal').textContent = `Subtotal: ฿${Math.round(total).toLocaleString()}`;
+}
+
+function updateQOLTotal() {
+  const total = qolItems.reduce((sum, item) => sum + (parseFloat(item.cost) || 0), 0);
+  document.getElementById('qolTotal').textContent = `Subtotal: ฿${Math.round(total).toLocaleString()}`;
+}
+
+function updateOtherTotal() {
+  const total = otherExpenses.reduce((sum, item) => sum + (parseFloat(item.cost) || 0), 0);
+  document.getElementById('otherTotal').textContent = `Subtotal: ฿${Math.round(total).toLocaleString()}`;
+}
+
+async function updateField(functionName) {
+  const month = currentMonth;
+  let value = 0;
+  
+  if (functionName === 'updateSalary') value = parseFloat(document.getElementById('salary').value) || 0;
+  if (functionName === 'updateRentals') value = parseFloat(document.getElementById('rentals').value) || 0;
+  if (functionName === 'updateDividends') value = parseFloat(document.getElementById('dividends').value) || 0;
+  if (functionName === 'updateMarriageExp') value = parseFloat(document.getElementById('marriageExp').value) || 0;
+  if (functionName === 'updateFoodBudget') value = parseFloat(document.getElementById('foodBudget').value) || 0;
+  
+  const paramName = functionName === 'updateSalary' ? 'salary' : functionName === 'updateRentals' ? 'rentals' : functionName === 'updateDividends' ? 'dividends' : 'value';
+  await callAppsScript(functionName, {month, [paramName]: value});
+  recalculate();
+}
+
+function recalculate() {
+  const salary = parseFloat(document.getElementById('salary').value) || 0;
+  const rentals = parseFloat(document.getElementById('rentals').value) || 0;
+  const dividends = parseFloat(document.getElementById('dividends').value) || 0;
+  const totalIncome = salary + rentals + dividends;
+  
+  document.getElementById('totalIncome').textContent = '฿' + Math.round(totalIncome).toLocaleString();
+  
+  const crypto = 15000;
+  const joint = 15000;
+  const ffTotal = crypto + joint;
+  document.getElementById('ffSubtotal').textContent = '฿' + Math.round(ffTotal).toLocaleString();
+  
+  const marriage = parseFloat(document.getElementById('marriageExp').value) || 0;
+  const food = parseFloat(document.getElementById('foodBudget').value) || 0;
+  const subsTotal = subscriptions.reduce((sum, s) => sum + (parseFloat(s.cost) || 0), 0);
+  const qolTotal = qolItems.reduce((sum, q) => sum + (parseFloat(q.cost) || 0), 0);
+  const otherTotal = otherExpenses.reduce((sum, o) => sum + (parseFloat(o.cost) || 0), 0);
+  
+  const totalFixed = ffTotal + marriage + food + subsTotal + qolTotal + otherTotal;
+  document.getElementById('totalFixedCosts').textContent = '฿' + Math.round(totalFixed).toLocaleString();
+  
+  const discretionary = totalIncome - totalFixed;
+  document.getElementById('discretionaryAmount').textContent = '฿' + Math.round(discretionary).toLocaleString();
+  document.getElementById('disposableIncome').textContent = '฿' + Math.round(discretionary).toLocaleString();
+}
+
+function addSubscription() {
+  alert('Add subscriptions directly in your Google Sheet (Subscriptions tab). Refresh the dashboard to see them here.');
+}
+
+function addQOL() {
+  alert('Add QOL items directly in your Google Sheet (QOL_Items tab). Refresh the dashboard to see them here.');
+}
+
+function addOther() {
+  alert('Add expenses directly in your Google Sheet (Other_Expenses tab). Refresh the dashboard to see them here.');
+}
+
+initMonths();
+</script>
+</body>
+</html>
