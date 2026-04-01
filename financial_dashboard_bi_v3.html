@@ -230,12 +230,15 @@
       <div class="chart-card full-width">
         <div class="chart-title">Disposable Income Trend</div>
         <div class="chart-container" style="height: 280px;">
-          <canvas id="disposableChart"></canvas>
+          <canvas id="discretionaryChart"></canvas>
         </div>
       </div>
-      
-      <!-- Expense Breakdown Toggle Table -->
-      <div class="chart-card">
+
+    </div>
+  </div>
+</div>
+
+<script>
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxqGkNN_M29dSEMP3qXerIxom3vksoafaZvTH6cX8IeSQxEii7DW6_7w0jtsh_krw/exec';
 
 let allData = null;
@@ -542,7 +545,6 @@ function renderDisposableChart(allData) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      indexAxis: 'x',
       scales: {
         x: { stacked: true, ticks: { color: '#fff' } },
         y: { 
