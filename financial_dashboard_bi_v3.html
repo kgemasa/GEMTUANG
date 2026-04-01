@@ -504,7 +504,7 @@ function renderExpensesChart(allData) {
 }
 
 function renderDisposableChart(allData) {
-  const months = allData.months.slice().reverse().slice(0, 12).reverse();
+  const months = allData.months.slice().reverse().slice(0, 12);
   
   const income = months.map(m => {
     const data = allData.financialData[m];
@@ -527,13 +527,6 @@ function renderDisposableChart(allData) {
       labels: months.map(parseMonth),
       datasets: [
         {
-          label: 'Fixed Costs',
-          data: fixedCosts,
-          backgroundColor: colors.expense,
-          borderColor: 'rgba(15, 23, 42, 0.8)',
-          borderWidth: 1
-        },
-        {
           label: 'Disposable Income',
           data: disposable,
           backgroundColor: colors.income,
@@ -546,9 +539,8 @@ function renderDisposableChart(allData) {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
-        x: { stacked: true, ticks: { color: '#fff' } },
+        x: { ticks: { color: '#fff' } },
         y: { 
-          stacked: true,
           ticks: { 
             callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k',
             color: '#fff'
