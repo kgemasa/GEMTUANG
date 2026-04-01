@@ -268,46 +268,89 @@ function parseMonth(monthStr) {
   return monthStr;
 }
 
-function renderIncomeExpensesChart(monthData) {
-  const income = parseFloat(monthData['Total_Income']) || 0;
-  const expenses = parseFloat(monthData['Total_Fixed_Costs']) || 0;
-  const discretionary = income - expenses;
+function renderIncomeExpensesChart(allData) {
+  // Get last 12 months in chronological order (oldest first)
+  const months = allData.months.slice().reverse().slice(0, 12);
+  
+  const incomes = months.map(m => parseFloat(allData.financialData[m]['Total_Income']) || 0);
+  const expenses = months.map(m => parseFloat(allData.financialData[m]['Total_Fixed_Costs']) || 0);
+  const discretionary = months.map((m, i) => incomes[i] - expenses[i]);
   
   const ctx = document.getElementById('incomeExpensesChart').getContext('2d');
   if (charts.incomeExpenses) charts.incomeExpenses.destroy();
   
+  // Calculate totals for data labels
+  const monthTotals = months.map((m, i) => incomes[i] + expenses[i] + discretionary[i]);
+  
   charts.incomeExpenses = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: ['This Month'],
+      labels: months.map(parseMonth),
       datasets: [
         {
           label: 'Income',
-          data: [income],
+          data: incomes,
           backgroundColor: colors.income,
           borderRadius: 4
         },
         {
           label: 'Fixed Expenses',
-          data: [expenses],
+          data: expenses,
           backgroundColor: colors.expense,
           borderRadius: 4
         },
         {
           label: 'Discretionary',
-          data: [discretionary],
+          data: discretionary,
           backgroundColor: colors.dividends,
           borderRadius: 4
         }
       ]
     },
     options: {
-      indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
+      stacked: true,
       plugins: {
-        legend: { position: 'top' },
+        legend: { position: 'bottom', labels: { color: '#fff' } },
         tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              return ctx.dataset.label + ': ' + formatCurrency(ctx.parsed.y);
+            },
+            afterLabel: (ctx) => {
+              const monthIndex = ctx.dataIndex;
+              return 'Month Total: ' + formatCurrency(monthTotals[monthIndex]);
+            }
+          },
+          backgroundColor: 'rgba(0,0,0,0.7)'
+        },
+        datalabels: {
+          anchor: 'end',
+          align: 'end',
+          color: '#fff',
+          font: { weight: 'bold', size: 12 },
+          formatter: (value, context) => {
+            if (context.datasetIndex === 2) {
+              return formatCurrency(monthTotals[context.dataIndex]);
+            }
+            return '';
+          }
+        }
+      },
+      scales: {
+        y: {
+          stacked: true,
+          ticks: { callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k', color: '#999' }
+        },
+        x: {
+          stacked: true,
+          ticks: { color: '#fff' }
+        }
+      }
+    }
+  });
+}
           callbacks: {
             label: (ctx) => {
               const label = ctx.dataset.label || '';
@@ -615,7 +658,7 @@ function loadDashboard() {
   currentMonth = selectedMonth;
   const monthData = allData.financialData[selectedMonth];
   
-  renderIncomeExpensesChart(monthData);
+  renderIncomeExpensesChart(allData);
   renderIncomeChart(allData);
   renderExpensesChart(allData);
   renderDiscretionaryChart(allData);
