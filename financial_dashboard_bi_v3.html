@@ -368,13 +368,14 @@ function renderExpensesChart(allData) {
   // Get last 6 months in correct chronological order (oldest first)
   const months = allData.months.slice().reverse().slice(0, 6);
   
+  // These map directly to Data sheet columns
   const datasets = [
     { label: 'Investments', key: 'FF_Total', color: colors.ff },
     { label: 'GT Expenses', key: 'Marriage_Exp', color: colors.marriage },
     { label: 'Food', key: 'Food_Budget', color: colors.food },
     { label: 'Subs', key: 'Subs_Total', color: colors.subs },
     { label: 'QOL', key: 'QOL_Total', color: colors.qol },
-    { label: 'Installments', key: 'Other_Total', color: colors.installments }
+    { label: 'Installments', key: 'Installments', color: colors.installments }
   ];
   
   const ctx = document.getElementById('expensesChart').getContext('2d');
