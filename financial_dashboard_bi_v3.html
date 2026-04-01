@@ -243,12 +243,12 @@ const colors = {
   salary: '#0099ff',
   rentals: '#00d084',
   dividends: '#9d4edd',
-  ff: '#ff006e',
-  marriage: '#ffd60a',
+  ff: '#9d4edd',
+  marriage: '#ec4899',
   food: '#ffc300',
   subs: '#00b4d8',
   qol: '#90e0ef',
-  installments: '#ef476f'
+  installments: '#ff8c00'
 };
 
 function formatCurrency(value) {
@@ -369,8 +369,8 @@ function renderExpensesChart(allData) {
   const months = allData.months.slice().reverse().slice(0, 6);
   
   const datasets = [
-    { label: 'FF', key: 'FF_Total', color: colors.ff },
-    { label: 'Marriage', key: 'Marriage_Exp', color: colors.marriage },
+    { label: 'Investments', key: 'FF_Total', color: colors.ff },
+    { label: 'GT Expenses', key: 'Marriage_Exp', color: colors.marriage },
     { label: 'Food', key: 'Food_Budget', color: colors.food },
     { label: 'Subs', key: 'Subs_Total', color: colors.subs },
     { label: 'QOL', key: 'QOL_Total', color: colors.qol },
