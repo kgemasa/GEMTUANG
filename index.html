@@ -159,22 +159,14 @@
 <script>
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby6jwFl6VtXwzWenws0qhfx55BWxl0RySEJv77zgyPdPfxsFMDjpzxkweIkk5jWF5yMaA/exec';
 
-window.honeymoonCallback = function(data) {
-  console.log('Data received:', data);
-  renderDashboard(data);
-};
-
-function loadData() {
+async function loadData() {
   try {
-    const script = document.createElement('script');
-    script.src = APPS_SCRIPT_URL + '?callback=honeymoonCallback';
-    script.onerror = function() {
-      document.getElementById('content').innerHTML = '<div class="error">Error loading data. Make sure the Apps Script URL is correct.</div>';
-    };
-    document.head.appendChild(script);
+    const response = await fetch(APPS_SCRIPT_URL);
+    const data = await response.json();
+    renderDashboard(data);
   } catch (error) {
     console.error('Error:', error);
-    document.getElementById('content').innerHTML = '<div class="error">Error: ' + error.message + '</div>';
+    document.getElementById('content').innerHTML = '<div class="error">Error loading data. Check console for details.</div>';
   }
 }
 
