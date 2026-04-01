@@ -46,19 +46,6 @@
       gap: 12px;
       margin-top: 20px;
       flex-wrap: wrap;
-      align-items: center;
-    }
-    
-    .control-group {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-    
-    .control-group label {
-      color: #a0a0a0;
-      font-weight: 500;
-      font-size: 14px;
     }
     
     select {
@@ -67,10 +54,9 @@
       border-radius: 6px;
       font-size: 14px;
       background: rgba(255,255,255,0.05);
-      color: #000;
+      color: #e0e0e0;
       cursor: pointer;
       transition: all 0.2s;
-      min-width: 120px;
     }
     
     select:hover {
@@ -108,12 +94,6 @@
       grid-column: 1 / -1;
     }
     
-    .chart-card.with-table {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-    
     .chart-title {
       font-size: 16px;
       font-weight: 600;
@@ -126,48 +106,40 @@
     .chart-container {
       position: relative;
       height: 320px;
+      cursor: pointer;
     }
     
-    .table-container {
-      overflow-x: auto;
+    .chart-container.interactive:hover {
+      opacity: 0.9;
     }
     
-    .expense-table {
-      width: 100%;
-      border-collapse: collapse;
+    .drilldown-info {
+      text-align: center;
+      color: rgba(255,255,255,0.6);
       font-size: 13px;
+      margin-top: 12px;
     }
     
-    .expense-table th {
-      background: rgba(0,153,255,0.1);
-      color: #fff;
-      padding: 12px 8px;
-      text-align: left;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    
-    .expense-table td {
-      padding: 10px 8px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      color: #e0e0e0;
-    }
-    
-    .expense-table tr:hover {
-      background: rgba(0,153,255,0.05);
-    }
-    
-    .expense-table .category {
+    .drilldown-info.active {
       color: #0099ff;
-      font-weight: 500;
     }
     
-    .expense-table .amount {
-      text-align: right;
-      color: #00d084;
-      font-weight: 500;
+    .back-button {
+      display: inline-block;
+      padding: 8px 16px;
+      background: rgba(0,153,255,0.2);
+      border: 1px solid rgba(0,153,255,0.5);
+      border-radius: 6px;
+      color: #0099ff;
+      cursor: pointer;
+      font-size: 13px;
+      margin-bottom: 12px;
+      transition: all 0.2s;
+    }
+    
+    .back-button:hover {
+      background: rgba(0,153,255,0.3);
+      border-color: rgba(0,153,255,0.7);
     }
     
     .loading {
@@ -192,18 +164,10 @@
   <div class="header">
     <h1>Financial Analytics Dashboard</h1>
     <div class="controls">
-      <div class="control-group">
-        <label for="yearSelect">Year:</label>
-        <select id="yearSelect" onchange="loadDashboard()">
-          <option value="">Loading...</option>
-        </select>
-      </div>
-      <div class="control-group">
-        <label for="monthSelect">Month:</label>
-        <select id="monthSelect" onchange="loadDashboard()">
-          <option value="">Loading...</option>
-        </select>
-      </div>
+      <label for="monthSelect" style="padding: 10px 0; color: #a0a0a0; font-weight: 500;">Select Month:</label>
+      <select id="monthSelect" onchange="loadDashboard()">
+        <option value="">Loading...</option>
+      </select>
     </div>
   </div>
   
@@ -211,6 +175,14 @@
   
   <div id="dashboard" style="display: none;">
     <div class="charts-grid">
+      <!-- Main Income vs Expenses -->
+      <div class="chart-card full-width">
+        <div class="chart-title">Monthly Overview: Income vs Expenses</div>
+        <div class="chart-container">
+          <canvas id="incomeExpensesChart"></canvas>
+        </div>
+      </div>
+      
       <!-- Income Trend -->
       <div class="chart-card">
         <div class="chart-title">Income Trend (6 Months)</div>
@@ -219,7 +191,7 @@
         </div>
       </div>
       
-      <!-- Expenses Trend (Stacked 100%) -->
+      <!-- Expenses Trend -->
       <div class="chart-card">
         <div class="chart-title">Expenses Trend (6 Months)</div>
         <div class="chart-container">
@@ -227,39 +199,29 @@
         </div>
       </div>
       
-      <!-- Discretionary Trend (12 Months) -->
+      <!-- Discretionary Trend -->
       <div class="chart-card full-width">
-        <div class="chart-title">Discretionary Income (12 Months)</div>
+        <div class="chart-title">Discretionary Income Trend</div>
         <div class="chart-container" style="height: 280px;">
           <canvas id="discretionaryChart"></canvas>
         </div>
       </div>
       
-      <!-- Expense Categories Pie + QOL Table -->
-      <div class="chart-card with-table">
-        <div>
-          <div class="chart-title">Expense Categories</div>
-          <div class="chart-container">
-            <canvas id="expensePieChart"></canvas>
-          </div>
+      <!-- Expenses Pie -->
+      <div class="chart-card">
+        <div class="chart-title">Expense Categories (Click to Drill Down)</div>
+        <div class="chart-container interactive" onclick="handlePieClick()">
+          <canvas id="expensePieChart"></canvas>
         </div>
-        <div>
-          <div class="chart-title">QOL Items Breakdown</div>
-          <div class="table-container">
-            <table class="expense-table">
-              <thead>
-                <tr>
-                  <th>Category</th>
-                  <th>Monthly Cost</th>
-                </tr>
-              </thead>
-              <tbody id="qolTableBody">
-                <tr>
-                  <td colspan="2" style="text-align: center; color: #999;">Loading...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <div class="drilldown-info" id="drilldownInfo">Click on a category to see details</div>
+      </div>
+      
+      <!-- Detailed Drilldown Pie -->
+      <div class="chart-card" id="drilldownCard" style="display: none;">
+        <button class="back-button" onclick="clearDrilldown()">← Back to Categories</button>
+        <div class="chart-title" id="drilldownTitle">Category Details</div>
+        <div class="chart-container">
+          <canvas id="drilldownChart"></canvas>
         </div>
       </div>
     </div>
@@ -270,11 +232,13 @@
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz8rRt3HrE8dTtdBb4I51oPR7iU2lPE1Y68BeejJPi9CYBEgEeCzjHo6IbkNitBdp3S/exec';
 
 let allData = null;
-let currentYear = null;
 let currentMonth = null;
 let charts = {};
+let drilldownState = null;
 
 const colors = {
+  income: '#00d084',
+  expense: '#ff6b6b',
   salary: '#0099ff',
   rentals: '#00d084',
   dividends: '#9d4edd',
@@ -303,44 +267,74 @@ function parseMonth(monthStr) {
   return monthStr;
 }
 
-function getMonthNumber(monthStr) {
-  const date = new Date(monthStr + '-01');
-  return date.getMonth();
-}
-
-function get6MonthRange(selectedMonth) {
-  if (!allData || !selectedMonth) return [];
+function renderIncomeExpensesChart(monthData) {
+  const income = parseFloat(monthData['Total_Income']) || 0;
+  const expenses = parseFloat(monthData['Total_Fixed_Costs']) || 0;
+  const discretionary = income - expenses;
   
-  const selectedDate = new Date(selectedMonth + '-01');
-  const year = selectedDate.getFullYear();
-  const month = selectedDate.getMonth();
+  const ctx = document.getElementById('incomeExpensesChart').getContext('2d');
+  if (charts.incomeExpenses) charts.incomeExpenses.destroy();
   
-  const range = [];
-  for (let i = -5; i <= 0; i++) {
-    const d = new Date(year, month + i, 1);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const key = `${y}-${m}`;
-    if (allData.financialData[key]) {
-      range.push(key);
+  charts.incomeExpenses = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['This Month'],
+      datasets: [
+        {
+          label: 'Income',
+          data: [income],
+          backgroundColor: colors.income,
+          borderRadius: 4
+        },
+        {
+          label: 'Fixed Expenses',
+          data: [expenses],
+          backgroundColor: colors.expense,
+          borderRadius: 4
+        },
+        {
+          label: 'Discretionary',
+          data: [discretionary],
+          backgroundColor: colors.dividends,
+          borderRadius: 4
+        }
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const label = ctx.dataset.label || '';
+              const value = formatCurrency(ctx.parsed.x);
+              const pct = ((ctx.parsed.x / income) * 100).toFixed(1);
+              return `${label}: ${value} (${pct}%)`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          stacked: false,
+          ticks: {
+            callback: (value) => '฿' + (value / 1000).toFixed(0) + 'k'
+          }
+        }
+      }
     }
-  }
-  
-  return range;
+  });
 }
 
-function get12MonthRange() {
-  if (!allData) return [];
+function renderIncomeChart(allData) {
+  const months = allData.months.slice().reverse().slice(0, 6).reverse();
   
-  // Get last 12 months from all available data
-  const sorted = allData.months.slice().reverse();
-  return sorted.slice(0, 12).reverse();
-}
-
-function renderIncomeChart(monthRange) {
-  const salaries = monthRange.map(m => parseFloat(allData.financialData[m]['Salary']) || 0);
-  const rentals = monthRange.map(m => parseFloat(allData.financialData[m]['Rentals']) || 0);
-  const dividends = monthRange.map(m => parseFloat(allData.financialData[m]['Dividends']) || 0);
+  const salaries = months.map(m => parseFloat(allData.financialData[m]['Salary']) || 0);
+  const rentals = months.map(m => parseFloat(allData.financialData[m]['Rentals']) || 0);
+  const dividends = months.map(m => parseFloat(allData.financialData[m]['Dividends']) || 0);
   
   const ctx = document.getElementById('incomeChart').getContext('2d');
   if (charts.income) charts.income.destroy();
@@ -348,7 +342,7 @@ function renderIncomeChart(monthRange) {
   charts.income = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: monthRange.map(parseMonth),
+      labels: months.map(parseMonth),
       datasets: [
         { label: 'Salary', data: salaries, backgroundColor: colors.salary, borderRadius: 4 },
         { label: 'Rentals', data: rentals, backgroundColor: colors.rentals, borderRadius: 4 },
@@ -359,21 +353,19 @@ function renderIncomeChart(monthRange) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'bottom', labels: { color: '#fff' } },
-        tooltip: {
-          callbacks: { label: (ctx) => formatCurrency(ctx.parsed.y) },
-          backgroundColor: 'rgba(0,0,0,0.7)'
-        }
+        legend: { position: 'bottom' },
+        tooltip: { callbacks: { label: (ctx) => formatCurrency(ctx.parsed.y) } }
       },
       scales: {
-        x: { ticks: { color: '#fff' } },
-        y: { ticks: { callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k', color: '#999' } }
+        y: { ticks: { callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k' } }
       }
     }
   });
 }
 
-function renderExpensesChart(monthRange) {
+function renderExpensesChart(allData) {
+  const months = allData.months.slice().reverse().slice(0, 6).reverse();
+  
   const datasets = [
     { label: 'FF', key: 'FF_Total', color: colors.ff },
     { label: 'Marriage', key: 'Marriage_Exp', color: colors.marriage },
@@ -389,35 +381,33 @@ function renderExpensesChart(monthRange) {
   charts.expenses = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: monthRange.map(parseMonth),
+      labels: months.map(parseMonth),
       datasets: datasets.map(ds => ({
         label: ds.label,
-        data: monthRange.map(m => parseFloat(allData.financialData[m][ds.key]) || 0),
+        data: months.map(m => parseFloat(allData.financialData[m][ds.key]) || 0),
         backgroundColor: ds.color,
         borderRadius: 4
       }))
     },
     options: {
-      indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
       stacked: true,
       plugins: {
-        legend: { position: 'bottom', labels: { color: '#fff' } },
-        tooltip: {
-          callbacks: { label: (ctx) => formatCurrency(ctx.parsed.x) },
-          backgroundColor: 'rgba(0,0,0,0.7)'
-        }
+        legend: { position: 'bottom' },
+        tooltip: { callbacks: { label: (ctx) => formatCurrency(ctx.parsed.y) } }
       },
       scales: {
-        x: { ticks: { callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k', color: '#999' } }
+        y: { ticks: { callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k' } }
       }
     }
   });
 }
 
-function renderDiscretionaryChart(monthRange) {
-  const discretionary = monthRange.map(m => {
+function renderDiscretionaryChart(allData) {
+  const months = allData.months.slice().reverse().slice(0, 6).reverse();
+  
+  const discretionary = months.map(m => {
     const data = allData.financialData[m];
     return (parseFloat(data['Total_Income']) || 0) - (parseFloat(data['Total_Fixed_Costs']) || 0);
   });
@@ -426,41 +416,39 @@ function renderDiscretionaryChart(monthRange) {
   if (charts.discretionary) charts.discretionary.destroy();
   
   charts.discretionary = new Chart(ctx, {
-    type: 'bar',
+    type: 'line',
     data: {
-      labels: monthRange.map(parseMonth),
+      labels: months.map(parseMonth),
       datasets: [{
         label: 'Discretionary Income',
         data: discretionary,
-        backgroundColor: '#00d084',
-        borderRadius: 4
+        borderColor: colors.income,
+        backgroundColor: 'rgba(0, 208, 132, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 5,
+        pointBackgroundColor: colors.income,
+        pointBorderColor: 'white',
+        pointBorderWidth: 2
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: { label: (ctx) => formatCurrency(ctx.parsed.y) },
-          backgroundColor: 'rgba(0,0,0,0.7)'
-        }
-      },
-      scales: {
-        x: { ticks: { color: '#fff' } },
-        y: { ticks: { callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k', color: '#999' } }
-      }
+      plugins: { legend: { display: false } },
+      scales: { y: { ticks: { callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k' } } }
     }
   });
 }
 
-function renderExpensePieChart(monthData) {
+function renderExpensePieChart(monthData, allData) {
   const categories = {
-    'FF': 30000,
+    'Financial Freedom': 30000,
     'Marriage': parseFloat(monthData['Marriage_Exp']) || 0,
     'Food': parseFloat(monthData['Food_Budget']) || 0,
-    'Subs': parseFloat(monthData['Subs_Total']) || 0,
-    'QOL': parseFloat(monthData['QOL_Total']) || 0,
+    'Subscriptions': parseFloat(monthData['Subs_Total']) || 0,
+    'QOL Items': parseFloat(monthData['QOL_Total']) || 0,
     'Installments': parseFloat(monthData['Other_Total']) || 0
   };
   
@@ -482,7 +470,7 @@ function renderExpensePieChart(monthData) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'bottom', labels: { color: '#fff' } },
+        legend: { position: 'bottom' },
         tooltip: {
           callbacks: {
             label: (ctx) => {
@@ -491,58 +479,109 @@ function renderExpensePieChart(monthData) {
               const pct = ((value / total) * 100).toFixed(1);
               return `${ctx.label}: ${formatCurrency(value)} (${pct}%)`;
             }
-          },
-          backgroundColor: 'rgba(0,0,0,0.7)'
+          }
+        }
+      }
+    }
+  });
+  
+  // Store categories for drilldown
+  window.categoryData = { monthData, allData, categories };
+}
+
+function handlePieClick() {
+  const canvasElement = document.getElementById('expensePieChart');
+  const canvasPosition = Chart.helpers.getRelativePosition(event, charts.pie.chart);
+  const dataX = charts.pie.scales.x ? charts.pie.scales.x.getValueForPixel(canvasPosition.x) : 0;
+  const dataPoints = charts.pie.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+  
+  if (dataPoints.length > 0 && window.categoryData) {
+    const index = dataPoints[0].index;
+    const category = Object.keys(window.categoryData.categories)[index];
+    drillDownCategory(category);
+  }
+}
+
+function drillDownCategory(category) {
+  drilldownState = category;
+  document.getElementById('drilldownCard').style.display = 'block';
+  document.getElementById('drilldownInfo').textContent = `Click category to view items`;
+  
+  const allData = window.categoryData.allData;
+  const month = currentMonth;
+  let items = [];
+  let chartType = 'doughnut';
+  
+  if (category === 'Subscriptions') {
+    items = (allData.subscriptions[month] || []).map(s => ({ name: s.name, value: s.cost }));
+  } else if (category === 'QOL Items') {
+    items = (allData.qolItems[month] || []).map(q => ({ name: q.name, value: q.cost }));
+  } else if (category === 'Installments') {
+    items = (allData.otherExpenses[month] || []).map(o => ({ name: o.name, value: o.cost }));
+  } else {
+    items = [{ name: category, value: window.categoryData.categories[category] }];
+  }
+  
+  renderDrilldownChart(category, items);
+}
+
+function renderDrilldownChart(category, items) {
+  document.getElementById('drilldownTitle').textContent = `${category} Breakdown`;
+  
+  const ctx = document.getElementById('drilldownChart').getContext('2d');
+  if (charts.drilldown) charts.drilldown.destroy();
+  
+  const colors_array = ['#0099ff', '#00d084', '#ff006e', '#ffd60a', '#ffc300', '#00b4d8', '#90e0ef'];
+  
+  charts.drilldown = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: items.map(i => i.name),
+      datasets: [{
+        data: items.map(i => i.value),
+        backgroundColor: colors_array.slice(0, items.length),
+        borderColor: 'rgba(15, 23, 42, 0.8)',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => formatCurrency(ctx.parsed)
+          }
         }
       }
     }
   });
 }
 
-function renderQOLTable(monthData) {
-  const qolMonth = currentMonth;
-  const qolItems = (allData.qolItems[qolMonth] || []);
-  
-  // Sum by category
-  const categorySums = {};
-  qolItems.forEach(item => {
-    const cat = item.category || 'Other';
-    categorySums[cat] = (categorySums[cat] || 0) + (parseFloat(item.cost) || 0);
-  });
-  
-  // Sort by amount descending
-  const sorted = Object.entries(categorySums).sort((a, b) => b[1] - a[1]);
-  
-  const tbody = document.getElementById('qolTableBody');
-  tbody.innerHTML = sorted.map(([cat, amount]) => `
-    <tr>
-      <td class="category">${cat}</td>
-      <td class="amount">${formatCurrency(amount)}</td>
-    </tr>
-  `).join('');
+function clearDrilldown() {
+  drilldownState = null;
+  document.getElementById('drilldownCard').style.display = 'none';
+  if (charts.drilldown) charts.drilldown.destroy();
 }
 
 function loadDashboard() {
-  const yearSelect = document.getElementById('yearSelect');
   const monthSelect = document.getElementById('monthSelect');
+  const selectedMonth = monthSelect.value;
   
-  currentYear = yearSelect.value;
-  currentMonth = monthSelect.value;
+  if (!allData || !allData.financialData[selectedMonth]) {
+    console.error('No data for month:', selectedMonth);
+    return;
+  }
   
-  if (!allData || !currentMonth) return;
+  currentMonth = selectedMonth;
+  const monthData = allData.financialData[selectedMonth];
   
-  const monthData = allData.financialData[currentMonth];
-  if (!monthData) return;
-  
-  // Get 6-month range for trends
-  const monthRange6 = get6MonthRange(currentMonth);
-  const monthRange12 = get12MonthRange();
-  
-  renderIncomeChart(monthRange6);
-  renderExpensesChart(monthRange6);
-  renderDiscretionaryChart(monthRange12);
-  renderExpensePieChart(monthData);
-  renderQOLTable(monthData);
+  renderIncomeExpensesChart(monthData);
+  renderIncomeChart(allData);
+  renderExpensesChart(allData);
+  renderDiscretionaryChart(allData);
+  renderExpensePieChart(monthData, allData);
 }
 
 window.addEventListener('load', () => {
@@ -551,52 +590,22 @@ window.addEventListener('load', () => {
     .then(data => {
       allData = data;
       
-      // Build year options
-      const years = new Set();
-      data.months.forEach(m => {
-        const y = parseInt(m.split('-')[0]);
-        years.add(y);
-      });
-      
-      const yearSelect = document.getElementById('yearSelect');
-      yearSelect.innerHTML = '';
-      Array.from(years).sort().reverse().forEach(year => {
+      const monthSelect = document.getElementById('monthSelect');
+      monthSelect.innerHTML = '';
+      data.months.forEach(month => {
         const opt = document.createElement('option');
-        opt.value = year.toString();
-        opt.textContent = year;
-        yearSelect.appendChild(opt);
+        opt.value = month;
+        opt.textContent = parseMonth(month);
+        monthSelect.appendChild(opt);
       });
       
-      // On year change, update month options
-      yearSelect.onchange = () => {
-        const selectedYear = parseInt(yearSelect.value);
-        const monthSelect = document.getElementById('monthSelect');
-        monthSelect.innerHTML = '';
-        
-        data.months
-          .filter(m => parseInt(m.split('-')[0]) === selectedYear)
-          .sort()
-          .reverse()
-          .forEach(month => {
-            const opt = document.createElement('option');
-            opt.value = month;
-            opt.textContent = parseMonth(month);
-            monthSelect.appendChild(opt);
-          });
-        
-        if (monthSelect.options.length > 0) {
-          monthSelect.value = monthSelect.options[0].value;
-          loadDashboard();
-        }
-      };
-      
-      // Trigger initial load
-      if (yearSelect.options.length > 0) {
-        yearSelect.value = yearSelect.options[0].value;
-        yearSelect.dispatchEvent(new Event('change'));
+      if (data.months.length > 0) {
+        monthSelect.value = data.months[0];
+        currentMonth = data.months[0];
         
         document.getElementById('loading').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
+        loadDashboard();
       }
     })
     .catch(error => {
