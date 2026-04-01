@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Financial BI Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1a1f35 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+      color: #e0e0e0;
+    }
+    
+    .container {
+      max-width: 1800px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      margin-bottom: 40px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 30px;
+    }
+    
+    .header h1 {
+      font-size: 42px;
+      font-weight: 300;
+      margin-bottom: 10px;
+      background: linear-gradient(120deg, #fff 0%, #a0a0a0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    
+    select {
+      padding: 10px 16px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 6px;
+      font-size: 14px;
+      background: rgba(255,255,255,0.05);
+      color: #e0e0e0;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    select:hover {
+      border-color: rgba(255,255,255,0.4);
+      background: rgba(255,255,255,0.08);
+    }
+    
+    select:focus {
+      outline: none;
+      border-color: #0099ff;
+      box-shadow: 0 0 0 3px rgba(0,153,255,0.1);
+    }
+    
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    
+    .chart-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .chart-card:hover {
+      border-color: rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08);
+    }
+    
+    .chart-card.full-width {
+      grid-column: 1 / -1;
+    }
+    
+    .chart-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .chart-container {
+      position: relative;
+      height: 320px;
+      cursor: pointer;
+    }
+    
+    .chart-container.interactive:hover {
+      opacity: 0.9;
+    }
+    
+    .drilldown-info {
+      text-align: center;
+      color: rgba(255,255,255,0.6);
+      font-size: 13px;
+      margin-top: 12px;
+    }
+    
+    .drilldown-info.active {
+      color: #0099ff;
+    }
+    
+    .back-button {
+      display: inline-block;
+      padding: 8px 16px;
+      background: rgba(0,153,255,0.2);
+      border: 1px solid rgba(0,153,255,0.5);
+      border-radius: 6px;
+      color: #0099ff;
+      cursor: pointer;
+      font-size: 13px;
+      margin-bottom: 12px;
+      transition: all 0.2s;
+    }
+    
+    .back-button:hover {
+      background: rgba(0,153,255,0.3);
+      border-color: rgba(0,153,255,0.7);
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: rgba(255,255,255,0.6);
+      font-size: 16px;
+    }
+    
+    .error {
+      background: rgba(220,50,50,0.2);
+      color: #ff6b6b;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border-left: 4px solid #ff6b6b;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Financial Analytics Dashboard</h1>
+    <div class="controls">
+      <label for="monthSelect" style="padding: 10px 0; color: #a0a0a0; font-weight: 500;">Select Month:</label>
+      <select id="monthSelect" onchange="loadDashboard()">
+        <option value="">Loading...</option>
+      </select>
+    </div>
+  </div>
+  
+  <div id="loading" class="loading">Loading dashboard...</div>
+  
+  <div id="dashboard" style="display: none;">
+    <div class="charts-grid">
+      <!-- Main Income vs Expenses -->
+      <div class="chart-card full-width">
+        <div class="chart-title">Monthly Overview: Income vs Expenses</div>
+        <div class="chart-container">
+          <canvas id="incomeExpensesChart"></canvas>
+        </div>
+      </div>
+      
+      <!-- Income Trend -->
+      <div class="chart-card">
+        <div class="chart-title">Income Trend (6 Months)</div>
+        <div class="chart-container">
+          <canvas id="incomeChart"></canvas>
+        </div>
+      </div>
+      
+      <!-- Expenses Trend -->
+      <div class="chart-card">
+        <div class="chart-title">Expenses Trend (6 Months)</div>
+        <div class="chart-container">
+          <canvas id="expensesChart"></canvas>
+        </div>
+      </div>
+      
+      <!-- Discretionary Trend -->
+      <div class="chart-card full-width">
+        <div class="chart-title">Discretionary Income Trend</div>
+        <div class="chart-container" style="height: 280px;">
+          <canvas id="discretionaryChart"></canvas>
+        </div>
+      </div>
+      
+      <!-- Expenses Pie -->
+      <div class="chart-card">
+        <div class="chart-title">Expense Categories (Click to Drill Down)</div>
+        <div class="chart-container interactive" onclick="handlePieClick()">
+          <canvas id="expensePieChart"></canvas>
+        </div>
+        <div class="drilldown-info" id="drilldownInfo">Click on a category to see details</div>
+      </div>
+      
+      <!-- Detailed Drilldown Pie -->
+      <div class="chart-card" id="drilldownCard" style="display: none;">
+        <button class="back-button" onclick="clearDrilldown()">← Back to Categories</button>
+        <div class="chart-title" id="drilldownTitle">Category Details</div>
+        <div class="chart-container">
+          <canvas id="drilldownChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz8rRt3HrE8dTtdBb4I51oPR7iU2lPE1Y68BeejJPi9CYBEgEeCzjHo6IbkNitBdp3S/exec';
+
+let allData = null;
+let currentMonth = null;
+let charts = {};
+let drilldownState = null;
+
+const colors = {
+  income: '#00d084',
+  expense: '#ff6b6b',
+  salary: '#0099ff',
+  rentals: '#00d084',
+  dividends: '#9d4edd',
+  ff: '#ff006e',
+  marriage: '#ffd60a',
+  food: '#ffc300',
+  subs: '#00b4d8',
+  qol: '#90e0ef',
+  installments: '#ef476f'
+};
+
+function formatCurrency(value) {
+  if (!value || isNaN(value)) return '฿0';
+  return '฿' + Math.round(value).toLocaleString('en-US');
+}
+
+function parseMonth(monthStr) {
+  if (!monthStr) return 'Loading...';
+  const parts = monthStr.toString().split('-');
+  if (parts.length === 2) {
+    const year = parseInt(parts[0]);
+    const month = parseInt(parts[1]);
+    const date = new Date(year, month - 1);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+  }
+  return monthStr;
+}
+
+function renderIncomeExpensesChart(monthData) {
+  const income = parseFloat(monthData['Total_Income']) || 0;
+  const expenses = parseFloat(monthData['Total_Fixed_Costs']) || 0;
+  const discretionary = income - expenses;
+  
+  const ctx = document.getElementById('incomeExpensesChart').getContext('2d');
+  if (charts.incomeExpenses) charts.incomeExpenses.destroy();
+  
+  charts.incomeExpenses = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['This Month'],
+      datasets: [
+        {
+          label: 'Income',
+          data: [income],
+          backgroundColor: colors.income,
+          borderRadius: 4
+        },
+        {
+          label: 'Fixed Expenses',
+          data: [expenses],
+          backgroundColor: colors.expense,
+          borderRadius: 4
+        },
+        {
+          label: 'Discretionary',
+          data: [discretionary],
+          backgroundColor: colors.dividends,
+          borderRadius: 4
+        }
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const label = ctx.dataset.label || '';
+              const value = formatCurrency(ctx.parsed.x);
+              const pct = ((ctx.parsed.x / income) * 100).toFixed(1);
+              return `${label}: ${value} (${pct}%)`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          stacked: false,
+          ticks: {
+            callback: (value) => '฿' + (value / 1000).toFixed(0) + 'k'
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderIncomeChart(allData) {
+  const months = allData.months.slice().reverse().slice(0, 6).reverse();
+  
+  const salaries = months.map(m => parseFloat(allData.financialData[m]['Salary']) || 0);
+  const rentals = months.map(m => parseFloat(allData.financialData[m]['Rentals']) || 0);
+  const dividends = months.map(m => parseFloat(allData.financialData[m]['Dividends']) || 0);
+  
+  const ctx = document.getElementById('incomeChart').getContext('2d');
+  if (charts.income) charts.income.destroy();
+  
+  charts.income = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: months.map(parseMonth),
+      datasets: [
+        { label: 'Salary', data: salaries, backgroundColor: colors.salary, borderRadius: 4 },
+        { label: 'Rentals', data: rentals, backgroundColor: colors.rentals, borderRadius: 4 },
+        { label: 'Dividends', data: dividends, backgroundColor: colors.dividends, borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { callbacks: { label: (ctx) => formatCurrency(ctx.parsed.y) } }
+      },
+      scales: {
+        y: { ticks: { callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k' } }
+      }
+    }
+  });
+}
+
+function renderExpensesChart(allData) {
+  const months = allData.months.slice().reverse().slice(0, 6).reverse();
+  
+  const datasets = [
+    { label: 'FF', key: 'FF_Total', color: colors.ff },
+    { label: 'Marriage', key: 'Marriage_Exp', color: colors.marriage },
+    { label: 'Food', key: 'Food_Budget', color: colors.food },
+    { label: 'Subs', key: 'Subs_Total', color: colors.subs },
+    { label: 'QOL', key: 'QOL_Total', color: colors.qol },
+    { label: 'Installments', key: 'Other_Total', color: colors.installments }
+  ];
+  
+  const ctx = document.getElementById('expensesChart').getContext('2d');
+  if (charts.expenses) charts.expenses.destroy();
+  
+  charts.expenses = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: months.map(parseMonth),
+      datasets: datasets.map(ds => ({
+        label: ds.label,
+        data: months.map(m => parseFloat(allData.financialData[m][ds.key]) || 0),
+        backgroundColor: ds.color,
+        borderRadius: 4
+      }))
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      stacked: true,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { callbacks: { label: (ctx) => formatCurrency(ctx.parsed.y) } }
+      },
+      scales: {
+        y: { ticks: { callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k' } }
+      }
+    }
+  });
+}
+
+function renderDiscretionaryChart(allData) {
+  const months = allData.months.slice().reverse().slice(0, 6).reverse();
+  
+  const discretionary = months.map(m => {
+    const data = allData.financialData[m];
+    return (parseFloat(data['Total_Income']) || 0) - (parseFloat(data['Total_Fixed_Costs']) || 0);
+  });
+  
+  const ctx = document.getElementById('discretionaryChart').getContext('2d');
+  if (charts.discretionary) charts.discretionary.destroy();
+  
+  charts.discretionary = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: months.map(parseMonth),
+      datasets: [{
+        label: 'Discretionary Income',
+        data: discretionary,
+        borderColor: colors.income,
+        backgroundColor: 'rgba(0, 208, 132, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 5,
+        pointBackgroundColor: colors.income,
+        pointBorderColor: 'white',
+        pointBorderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { ticks: { callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k' } } }
+    }
+  });
+}
+
+function renderExpensePieChart(monthData, allData) {
+  const categories = {
+    'Financial Freedom': 30000,
+    'Marriage': parseFloat(monthData['Marriage_Exp']) || 0,
+    'Food': parseFloat(monthData['Food_Budget']) || 0,
+    'Subscriptions': parseFloat(monthData['Subs_Total']) || 0,
+    'QOL Items': parseFloat(monthData['QOL_Total']) || 0,
+    'Installments': parseFloat(monthData['Other_Total']) || 0
+  };
+  
+  const ctx = document.getElementById('expensePieChart').getContext('2d');
+  if (charts.pie) charts.pie.destroy();
+  
+  charts.pie = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(categories),
+      datasets: [{
+        data: Object.values(categories),
+        backgroundColor: [colors.ff, colors.marriage, colors.food, colors.subs, colors.qol, colors.installments],
+        borderColor: 'rgba(15, 23, 42, 0.8)',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const value = ctx.parsed;
+              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+              const pct = ((value / total) * 100).toFixed(1);
+              return `${ctx.label}: ${formatCurrency(value)} (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+  
+  // Store categories for drilldown
+  window.categoryData = { monthData, allData, categories };
+}
+
+function handlePieClick() {
+  const canvasElement = document.getElementById('expensePieChart');
+  const canvasPosition = Chart.helpers.getRelativePosition(event, charts.pie.chart);
+  const dataX = charts.pie.scales.x ? charts.pie.scales.x.getValueForPixel(canvasPosition.x) : 0;
+  const dataPoints = charts.pie.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+  
+  if (dataPoints.length > 0 && window.categoryData) {
+    const index = dataPoints[0].index;
+    const category = Object.keys(window.categoryData.categories)[index];
+    drillDownCategory(category);
+  }
+}
+
+function drillDownCategory(category) {
+  drilldownState = category;
+  document.getElementById('drilldownCard').style.display = 'block';
+  document.getElementById('drilldownInfo').textContent = `Click category to view items`;
+  
+  const allData = window.categoryData.allData;
+  const month = currentMonth;
+  let items = [];
+  let chartType = 'doughnut';
+  
+  if (category === 'Subscriptions') {
+    items = (allData.subscriptions[month] || []).map(s => ({ name: s.name, value: s.cost }));
+  } else if (category === 'QOL Items') {
+    items = (allData.qolItems[month] || []).map(q => ({ name: q.name, value: q.cost }));
+  } else if (category === 'Installments') {
+    items = (allData.otherExpenses[month] || []).map(o => ({ name: o.name, value: o.cost }));
+  } else {
+    items = [{ name: category, value: window.categoryData.categories[category] }];
+  }
+  
+  renderDrilldownChart(category, items);
+}
+
+function renderDrilldownChart(category, items) {
+  document.getElementById('drilldownTitle').textContent = `${category} Breakdown`;
+  
+  const ctx = document.getElementById('drilldownChart').getContext('2d');
+  if (charts.drilldown) charts.drilldown.destroy();
+  
+  const colors_array = ['#0099ff', '#00d084', '#ff006e', '#ffd60a', '#ffc300', '#00b4d8', '#90e0ef'];
+  
+  charts.drilldown = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: items.map(i => i.name),
+      datasets: [{
+        data: items.map(i => i.value),
+        backgroundColor: colors_array.slice(0, items.length),
+        borderColor: 'rgba(15, 23, 42, 0.8)',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => formatCurrency(ctx.parsed)
+          }
+        }
+      }
+    }
+  });
+}
+
+function clearDrilldown() {
+  drilldownState = null;
+  document.getElementById('drilldownCard').style.display = 'none';
+  if (charts.drilldown) charts.drilldown.destroy();
+}
+
+function loadDashboard() {
+  const monthSelect = document.getElementById('monthSelect');
+  const selectedMonth = monthSelect.value;
+  
+  if (!allData || !allData.financialData[selectedMonth]) {
+    console.error('No data for month:', selectedMonth);
+    return;
+  }
+  
+  currentMonth = selectedMonth;
+  const monthData = allData.financialData[selectedMonth];
+  
+  renderIncomeExpensesChart(monthData);
+  renderIncomeChart(allData);
+  renderExpensesChart(allData);
+  renderDiscretionaryChart(allData);
+  renderExpensePieChart(monthData, allData);
+}
+
+window.addEventListener('load', () => {
+  fetch(APPS_SCRIPT_URL)
+    .then(response => response.json())
+    .then(data => {
+      allData = data;
+      
+      const monthSelect = document.getElementById('monthSelect');
+      monthSelect.innerHTML = '';
+      data.months.forEach(month => {
+        const opt = document.createElement('option');
+        opt.value = month;
+        opt.textContent = parseMonth(month);
+        monthSelect.appendChild(opt);
+      });
+      
+      if (data.months.length > 0) {
+        monthSelect.value = data.months[0];
+        currentMonth = data.months[0];
+        
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        loadDashboard();
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      document.getElementById('loading').innerHTML = `<div class="error">Error loading dashboard: ${error.message}</div>`;
+    });
+});
+</script>
+</body>
+</html>
