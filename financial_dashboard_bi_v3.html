@@ -399,7 +399,14 @@ function renderExpensesChart(allData) {
         tooltip: { callbacks: { label: (ctx) => formatCurrency(ctx.parsed.x) }, backgroundColor: 'rgba(0,0,0,0.7)' }
       },
       scales: {
-        x: { ticks: { callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k', color: '#999' }, stacked: true }
+        x: { 
+          stacked: true,
+          ticks: { callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k', color: '#999' }
+        },
+        y: {
+          stacked: true,
+          ticks: { color: '#fff' }
+        }
       }
     }
   });
