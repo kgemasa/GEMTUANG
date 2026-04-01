@@ -562,7 +562,7 @@ window.addEventListener('load', () => {
       yearSelect.innerHTML = '';
       Array.from(years).sort().reverse().forEach(year => {
         const opt = document.createElement('option');
-        opt.value = year;
+        opt.value = year.toString();
         opt.textContent = year;
         yearSelect.appendChild(opt);
       });
