@@ -140,7 +140,7 @@
     .payer-card .total { font-size: 24px; font-weight: 500; }
     .payer-card .breakdown { font-size: 12px; color: #999; margin-top: 0.75rem; line-height: 1.6; }
 
-    .error { color: #e74c3c; padding: 1rem; background: #fadbd8; border-radius: 8px; border: 1px solid #e74c3c; }
+    .error { color: #c0392b; padding: 1rem; background: #fadbd8; border-radius: 8px; border: 1px solid #c0392b; margin-bottom: 1rem; }
   </style>
 </head>
 <body>
@@ -157,15 +157,24 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx3g8i4h2GihS_22BZ0oSdjtKD3E2DTWU1nDGNdqI1pSLyAwSY5R7HqP8SIDODgC3RbYw/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby6jwFl6VtXwzWenws0qhfx55BWxl0RySEJv77zgyPdPfxsFMDjpzxkweIkk5jWF5yMaA/exec';
 
-async function loadData() {
+window.honeymoonCallback = function(data) {
+  console.log('Data received:', data);
+  renderDashboard(data);
+};
+
+function loadData() {
   try {
-    const response = await fetch(APPS_SCRIPT_URL);
-    const data = await response.json();
-    renderDashboard(data);
+    const script = document.createElement('script');
+    script.src = APPS_SCRIPT_URL + '?callback=honeymoonCallback';
+    script.onerror = function() {
+      document.getElementById('content').innerHTML = '<div class="error">Error loading data. Make sure the Apps Script URL is correct.</div>';
+    };
+    document.head.appendChild(script);
   } catch (error) {
-    document.getElementById('content').innerHTML = `<div class="error">Error loading data: ${error.message}</div>`;
+    console.error('Error:', error);
+    document.getElementById('content').innerHTML = '<div class="error">Error: ' + error.message + '</div>';
   }
 }
 
