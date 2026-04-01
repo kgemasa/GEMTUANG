@@ -225,6 +225,26 @@
           <canvas id="drilldownChart"></canvas>
         </div>
       </div>
+      
+      <!-- QOL Items Breakdown Table -->
+      <div class="chart-card">
+        <div class="chart-title">QOL Items Breakdown</div>
+        <div style="overflow-x: auto; max-height: 400px; overflow-y: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #e0e0e0;">
+            <thead style="position: sticky; top: 0; background: rgba(0,153,255,0.1);">
+              <tr>
+                <th style="padding: 12px 8px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #fff;">Category</th>
+                <th style="padding: 12px 8px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #fff;">Monthly Cost</th>
+              </tr>
+            </thead>
+            <tbody id="qolTableBody">
+              <tr>
+                <td colspan="2" style="text-align: center; padding: 20px; color: #999;">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -409,7 +429,8 @@ function renderIncomeChart(allData) {
         tooltip: { callbacks: { label: (ctx) => formatCurrency(ctx.parsed.y) } }
       },
       scales: {
-        y: { ticks: { callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k' } }
+        y: { ticks: { callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k', color: '#fff' } },
+        x: { ticks: { color: '#fff' } }
       }
     }
   });
@@ -578,6 +599,33 @@ function renderExpensePieChart(monthData, allData) {
   window.categoryData = { monthData, allData, categories };
 }
 
+function renderQOLTable(allData, currentMonth) {
+  const qolMonth = currentMonth;
+  const qolItems = (allData.qolItems && allData.qolItems[qolMonth]) || [];
+  
+  // Sum by category
+  const categorySums = {};
+  qolItems.forEach(item => {
+    const cat = item.category || 'Other';
+    categorySums[cat] = (categorySums[cat] || 0) + (parseFloat(item.cost) || 0);
+  });
+  
+  // Sort by amount descending
+  const sorted = Object.entries(categorySums).sort((a, b) => b[1] - a[1]);
+  
+  const tbody = document.getElementById('qolTableBody');
+  if (sorted.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="2" style="text-align: center; padding: 20px; color: #999;">No QOL items for this month</td></tr>';
+  } else {
+    tbody.innerHTML = sorted.map(([cat, amount]) => `
+      <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); hover: background rgba(0,153,255,0.05);">
+        <td style="padding: 10px 8px; color: #0099ff; font-weight: 500;">${cat}</td>
+        <td style="padding: 10px 8px; text-align: right; color: #00d084; font-weight: 500;">${formatCurrency(amount)}</td>
+      </tr>
+    `).join('');
+  }
+}
+
 function handlePieClick() {
   const canvasElement = document.getElementById('expensePieChart');
   const canvasPosition = Chart.helpers.getRelativePosition(event, charts.pie.chart);
@@ -671,6 +719,7 @@ function loadDashboard() {
   renderExpensesChart(allData);
   renderDiscretionaryChart(allData);
   renderExpensePieChart(monthData, allData);
+  renderQOLTable(allData, selectedMonth);
 }
 
 window.addEventListener('load', () => {
