@@ -202,7 +202,13 @@
       
       <!-- QOL Items Breakdown Table -->
       <div class="chart-card">
-        <div class="chart-title">QOL Items Breakdown</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div class="chart-title" style="margin: 0;">Expense Breakdown</div>
+          <div style="display: flex; gap: 8px;">
+            <button onclick="switchBreakdown('qol')" id="qolBtn" style="padding: 8px 16px; border: 1px solid rgba(0,153,255,0.5); background: rgba(0,153,255,0.2); color: #0099ff; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s;">QOL Items</button>
+            <button onclick="switchBreakdown('subs')" id="subsBtn" style="padding: 8px 16px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #a0a0a0; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s;">Subscriptions</button>
+          </div>
+        </div>
         <div style="overflow-x: auto; max-height: 400px; overflow-y: auto;">
           <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #e0e0e0;">
             <thead style="position: sticky; top: 0; background: rgba(0,153,255,0.1);">
@@ -211,7 +217,7 @@
                 <th style="padding: 12px 8px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #fff;">Monthly Cost</th>
               </tr>
             </thead>
-            <tbody id="qolTableBody">
+            <tbody id="breakdownTableBody">
               <tr>
                 <td colspan="2" style="text-align: center; padding: 20px; color: #999;">Loading...</td>
               </tr>
@@ -613,16 +619,68 @@ function renderQOLTable(allData, currentMonth) {
   // Sort by amount descending
   const sorted = Object.entries(categorySums).sort((a, b) => b[1] - a[1]);
   
-  const tbody = document.getElementById('qolTableBody');
+  const tbody = document.getElementById('breakdownTableBody');
   if (sorted.length === 0) {
     tbody.innerHTML = '<tr><td colspan="2" style="text-align: center; padding: 20px; color: #999;">No QOL items for this month</td></tr>';
   } else {
     tbody.innerHTML = sorted.map(([cat, amount]) => `
-      <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); hover: background rgba(0,153,255,0.05);">
+      <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
         <td style="padding: 10px 8px; color: #0099ff; font-weight: 500;">${cat}</td>
         <td style="padding: 10px 8px; text-align: right; color: #00d084; font-weight: 500;">${formatCurrency(amount)}</td>
       </tr>
     `).join('');
+  }
+}
+
+function renderSubscriptionsTable(allData, currentMonth) {
+  const subsMonth = currentMonth;
+  const subsItems = (allData.subscriptions && allData.subscriptions[subsMonth]) || [];
+  
+  // Sum by category (Column B is category, Column F is monthly cost)
+  const categorySums = {};
+  subsItems.forEach(item => {
+    const cat = item.category || 'Other';
+    const cost = parseFloat(item.monthlyComputedCost) || parseFloat(item.cost) || 0;
+    categorySums[cat] = (categorySums[cat] || 0) + cost;
+  });
+  
+  // Sort by amount descending
+  const sorted = Object.entries(categorySums).sort((a, b) => b[1] - a[1]);
+  
+  const tbody = document.getElementById('breakdownTableBody');
+  if (sorted.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="2" style="text-align: center; padding: 20px; color: #999;">No subscriptions for this month</td></tr>';
+  } else {
+    tbody.innerHTML = sorted.map(([cat, amount]) => `
+      <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <td style="padding: 10px 8px; color: #0099ff; font-weight: 500;">${cat}</td>
+        <td style="padding: 10px 8px; text-align: right; color: #00d084; font-weight: 500;">${formatCurrency(amount)}</td>
+      </tr>
+    `).join('');
+  }
+}
+
+function switchBreakdown(type) {
+  // Update button styles
+  const qolBtn = document.getElementById('qolBtn');
+  const subsBtn = document.getElementById('subsBtn');
+  
+  if (type === 'qol') {
+    qolBtn.style.background = 'rgba(0,153,255,0.2)';
+    qolBtn.style.borderColor = 'rgba(0,153,255,0.5)';
+    qolBtn.style.color = '#0099ff';
+    subsBtn.style.background = 'transparent';
+    subsBtn.style.borderColor = 'rgba(255,255,255,0.2)';
+    subsBtn.style.color = '#a0a0a0';
+    renderQOLTable(allData, currentMonth);
+  } else if (type === 'subs') {
+    subsBtn.style.background = 'rgba(0,153,255,0.2)';
+    subsBtn.style.borderColor = 'rgba(0,153,255,0.5)';
+    subsBtn.style.color = '#0099ff';
+    qolBtn.style.background = 'transparent';
+    qolBtn.style.borderColor = 'rgba(255,255,255,0.2)';
+    qolBtn.style.color = '#a0a0a0';
+    renderSubscriptionsTable(allData, currentMonth);
   }
 }
 
@@ -720,6 +778,7 @@ function loadDashboard() {
   renderDiscretionaryChart(allData);
   renderExpensePieChart(monthData, allData);
   renderQOLTable(allData, selectedMonth);
+  window.currentMonth = selectedMonth; // Store for switchBreakdown function
 }
 
 window.addEventListener('load', () => {
