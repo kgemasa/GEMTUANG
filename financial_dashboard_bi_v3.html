@@ -269,108 +269,116 @@ function parseMonth(monthStr) {
 }
 
 function renderIncomeExpensesChart(allData) {
+  if (!allData || !allData.months || allData.months.length === 0) {
+    console.error('renderIncomeExpensesChart: No data available');
+    return;
+  }
+  
   // Get last 12 months in chronological order (oldest first)
   const months = allData.months.slice().reverse().slice(0, 12);
   
-  const incomes = months.map(m => parseFloat(allData.financialData[m]['Total_Income']) || 0);
-  const expenses = months.map(m => parseFloat(allData.financialData[m]['Total_Fixed_Costs']) || 0);
+  if (months.length === 0) {
+    console.error('renderIncomeExpensesChart: No months after filtering');
+    return;
+  }
+  
+  const incomes = months.map(m => {
+    const val = parseFloat(allData.financialData[m]['Total_Income']) || 0;
+    return val;
+  });
+  
+  const expenses = months.map(m => {
+    const val = parseFloat(allData.financialData[m]['Total_Fixed_Costs']) || 0;
+    return val;
+  });
+  
   const discretionary = months.map((m, i) => incomes[i] - expenses[i]);
   
-  const ctx = document.getElementById('incomeExpensesChart').getContext('2d');
+  const ctx = document.getElementById('incomeExpensesChart');
+  if (!ctx) {
+    console.error('renderIncomeExpensesChart: Canvas element not found');
+    return;
+  }
+  
+  const ctxContext = ctx.getContext('2d');
   if (charts.incomeExpenses) charts.incomeExpenses.destroy();
   
   // Calculate totals for data labels
   const monthTotals = months.map((m, i) => incomes[i] + expenses[i] + discretionary[i]);
   
-  charts.incomeExpenses = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: months.map(parseMonth),
-      datasets: [
-        {
-          label: 'Income',
-          data: incomes,
-          backgroundColor: colors.income,
-          borderRadius: 4
-        },
-        {
-          label: 'Fixed Expenses',
-          data: expenses,
-          backgroundColor: colors.expense,
-          borderRadius: 4
-        },
-        {
-          label: 'Discretionary',
-          data: discretionary,
-          backgroundColor: colors.dividends,
-          borderRadius: 4
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      stacked: true,
-      plugins: {
-        legend: { position: 'bottom', labels: { color: '#fff' } },
-        tooltip: {
-          callbacks: {
-            label: (ctx) => {
-              return ctx.dataset.label + ': ' + formatCurrency(ctx.parsed.y);
-            },
-            afterLabel: (ctx) => {
-              const monthIndex = ctx.dataIndex;
-              return 'Month Total: ' + formatCurrency(monthTotals[monthIndex]);
-            }
+  try {
+    charts.incomeExpenses = new Chart(ctxContext, {
+      type: 'bar',
+      data: {
+        labels: months.map(parseMonth),
+        datasets: [
+          {
+            label: 'Income',
+            data: incomes,
+            backgroundColor: colors.income,
+            borderRadius: 4
           },
-          backgroundColor: 'rgba(0,0,0,0.7)'
-        },
-        datalabels: {
-          anchor: 'end',
-          align: 'end',
-          color: '#fff',
-          font: { weight: 'bold', size: 12 },
-          formatter: (value, context) => {
-            if (context.datasetIndex === 2) {
-              return formatCurrency(monthTotals[context.dataIndex]);
-            }
-            return '';
+          {
+            label: 'Fixed Expenses',
+            data: expenses,
+            backgroundColor: colors.expense,
+            borderRadius: 4
+          },
+          {
+            label: 'Discretionary',
+            data: discretionary,
+            backgroundColor: colors.dividends,
+            borderRadius: 4
           }
-        }
+        ]
       },
-      scales: {
-        y: {
-          stacked: true,
-          ticks: { callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k', color: '#999' }
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        stacked: true,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#fff' } },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                return ctx.dataset.label + ': ' + formatCurrency(ctx.parsed.y);
+              },
+              afterLabel: (ctx) => {
+                const monthIndex = ctx.dataIndex;
+                return 'Month Total: ' + formatCurrency(monthTotals[monthIndex]);
+              }
+            },
+            backgroundColor: 'rgba(0,0,0,0.7)'
+          },
+          datalabels: {
+            anchor: 'end',
+            align: 'end',
+            color: '#fff',
+            font: { weight: 'bold', size: 12 },
+            formatter: (value, context) => {
+              if (context.datasetIndex === 2) {
+                return formatCurrency(monthTotals[context.dataIndex]);
+              }
+              return '';
+            }
+          }
         },
-        x: {
-          stacked: true,
-          ticks: { color: '#fff' }
+        scales: {
+          y: {
+            stacked: true,
+            ticks: { callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k', color: '#999' }
+          },
+          x: {
+            stacked: true,
+            ticks: { color: '#fff' }
+          }
         }
       }
-    }
-  });
-}
-          callbacks: {
-            label: (ctx) => {
-              const label = ctx.dataset.label || '';
-              const value = formatCurrency(ctx.parsed.x);
-              const pct = ((ctx.parsed.x / income) * 100).toFixed(1);
-              return `${label}: ${value} (${pct}%)`;
-            }
-          }
-        }
-      },
-      scales: {
-        x: {
-          stacked: false,
-          ticks: {
-            callback: (value) => '฿' + (value / 1000).toFixed(0) + 'k'
-          }
-        }
-      }
-    }
-  });
+    });
+    console.log('renderIncomeExpensesChart: Chart created successfully');
+  } catch (error) {
+    console.error('renderIncomeExpensesChart: Error creating chart', error);
+  }
 }
 
 function renderIncomeChart(allData) {
