@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Financial BI Dashboard</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -364,7 +365,8 @@ function renderIncomeChart(allData) {
 }
 
 function renderExpensesChart(allData) {
-  const months = allData.months.slice().reverse().slice(0, 6).reverse();
+  // Get last 6 months in correct chronological order (oldest first)
+  const months = allData.months.slice().reverse().slice(0, 6);
   
   const datasets = [
     { label: 'FF', key: 'FF_Total', color: colors.ff },
@@ -378,9 +380,13 @@ function renderExpensesChart(allData) {
   const ctx = document.getElementById('expensesChart').getContext('2d');
   if (charts.expenses) charts.expenses.destroy();
   
+  // Calculate totals for each month for data labels
+  const monthTotals = months.map(m => {
+    return datasets.reduce((sum, ds) => sum + (parseFloat(allData.financialData[m][ds.key]) || 0), 0);
+  });
+  
   charts.expenses = new Chart(ctx, {
     type: 'bar',
-    indexAxis: 'y',
     data: {
       labels: months.map(parseMonth),
       datasets: datasets.map(ds => ({
@@ -396,14 +402,37 @@ function renderExpensesChart(allData) {
       stacked: true,
       plugins: {
         legend: { position: 'bottom', labels: { color: '#fff' } },
-        tooltip: { callbacks: { label: (ctx) => formatCurrency(ctx.parsed.x) }, backgroundColor: 'rgba(0,0,0,0.7)' }
+        tooltip: { 
+          callbacks: { 
+            label: (ctx) => {
+              return ctx.dataset.label + ': ' + formatCurrency(ctx.parsed.y);
+            },
+            afterLabel: (ctx) => {
+              const monthIndex = ctx.dataIndex;
+              return 'Total: ' + formatCurrency(monthTotals[monthIndex]);
+            }
+          },
+          backgroundColor: 'rgba(0,0,0,0.7)'
+        },
+        datalabels: {
+          anchor: 'end',
+          align: 'end',
+          color: '#fff',
+          font: { weight: 'bold', size: 12 },
+          formatter: (value, context) => {
+            if (context.datasetIndex === datasets.length - 1) {
+              return formatCurrency(monthTotals[context.dataIndex]);
+            }
+            return '';
+          }
+        }
       },
       scales: {
-        x: { 
+        y: { 
           stacked: true,
           ticks: { callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k', color: '#999' }
         },
-        y: {
+        x: {
           stacked: true,
           ticks: { color: '#fff' }
         }
