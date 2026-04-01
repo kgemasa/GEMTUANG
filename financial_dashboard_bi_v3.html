@@ -226,36 +226,16 @@
         </div>
       </div>
       
-      <!-- Discretionary Trend -->
+      <!-- Disposable Trend -->
       <div class="chart-card full-width">
-        <div class="chart-title">Discretionary Income Trend</div>
+        <div class="chart-title">Disposable Income Trend</div>
         <div class="chart-container" style="height: 280px;">
-          <canvas id="discretionaryChart"></canvas>
+          <canvas id="disposableChart"></canvas>
         </div>
       </div>
       
-      <!-- Expenses Pie -->
+      <!-- Expense Breakdown Toggle Table -->
       <div class="chart-card">
-        <div class="chart-title">Expense Categories (Click to Drill Down)</div>
-        <div class="chart-container interactive" onclick="handlePieClick()">
-          <canvas id="expensePieChart"></canvas>
-        </div>
-        <div class="drilldown-info" id="drilldownInfo">Click on a category to see details</div>
-      </div>
-      
-      <!-- Detailed Drilldown Pie -->
-      <div class="chart-card" id="drilldownCard" style="display: none;">
-        <button class="back-button" onclick="clearDrilldown()">← Back to Categories</button>
-        <div class="chart-title" id="drilldownTitle">Category Details</div>
-        <div class="chart-container">
-          <canvas id="drilldownChart"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxqGkNN_M29dSEMP3qXerIxom3vksoafaZvTH6cX8IeSQxEii7DW6_7w0jtsh_krw/exec';
 
 let allData = null;
@@ -351,7 +331,7 @@ function renderIncomeExpensesChart(allData) {
             borderRadius: 4
           },
           {
-            label: 'Discretionary',
+            label: 'Disposable',
             data: discretionary,
             backgroundColor: colors.dividends,
             borderRadius: 4
@@ -520,89 +500,62 @@ function renderExpensesChart(allData) {
   });
 }
 
-function renderDiscretionaryChart(allData) {
-  const months = allData.months.slice().reverse().slice(0, 6).reverse();
+function renderDisposableChart(allData) {
+  const months = allData.months.slice().reverse().slice(0, 12).reverse();
   
-  const discretionary = months.map(m => {
+  const income = months.map(m => {
     const data = allData.financialData[m];
-    return (parseFloat(data['Total_Income']) || 0) - (parseFloat(data['Total_Fixed_Costs']) || 0);
+    return parseFloat(data['Total_Income']) || 0;
   });
   
-  const ctx = document.getElementById('discretionaryChart').getContext('2d');
-  if (charts.discretionary) charts.discretionary.destroy();
+  const fixedCosts = months.map(m => {
+    const data = allData.financialData[m];
+    return parseFloat(data['Total_Fixed_Costs']) || 0;
+  });
   
-  charts.discretionary = new Chart(ctx, {
-    type: 'line',
+  const disposable = months.map((m, idx) => income[idx] - fixedCosts[idx]);
+  
+  const ctx = document.getElementById('disposableChart').getContext('2d');
+  if (charts.disposable) charts.disposable.destroy();
+  
+  charts.disposable = new Chart(ctx, {
+    type: 'bar',
     data: {
       labels: months.map(parseMonth),
-      datasets: [{
-        label: 'Discretionary Income',
-        data: discretionary,
-        borderColor: colors.income,
-        backgroundColor: 'rgba(0, 208, 132, 0.1)',
-        borderWidth: 3,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 5,
-        pointBackgroundColor: colors.income,
-        pointBorderColor: 'white',
-        pointBorderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { y: { ticks: { callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k' } } }
-    }
-  });
-}
-
-function renderExpensePieChart(monthData, allData) {
-  const categories = {
-    'Financial Freedom': 30000,
-    'Marriage': parseFloat(monthData['Marriage_Exp']) || 0,
-    'Food': parseFloat(monthData['Food_Budget']) || 0,
-    'Subscriptions': parseFloat(monthData['Subs_Total']) || 0,
-    'QOL Items': parseFloat(monthData['QOL_Total']) || 0,
-    'Installments': parseFloat(monthData['Other_Total']) || 0
-  };
-  
-  const ctx = document.getElementById('expensePieChart').getContext('2d');
-  if (charts.pie) charts.pie.destroy();
-  
-  charts.pie = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: Object.keys(categories),
-      datasets: [{
-        data: Object.values(categories),
-        backgroundColor: [colors.ff, colors.marriage, colors.food, colors.subs, colors.qol, colors.installments],
-        borderColor: 'rgba(15, 23, 42, 0.8)',
-        borderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'bottom' },
-        tooltip: {
-          callbacks: {
-            label: (ctx) => {
-              const value = ctx.parsed;
-              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-              const pct = ((value / total) * 100).toFixed(1);
-              return `${ctx.label}: ${formatCurrency(value)} (${pct}%)`;
-            }
-          }
+      datasets: [
+        {
+          label: 'Fixed Costs',
+          data: fixedCosts,
+          backgroundColor: colors.expense,
+          borderColor: 'rgba(15, 23, 42, 0.8)',
+          borderWidth: 1
+        },
+        {
+          label: 'Disposable Income',
+          data: disposable,
+          backgroundColor: colors.income,
+          borderColor: 'rgba(15, 23, 42, 0.8)',
+          borderWidth: 1
         }
-      }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'x',
+      scales: {
+        x: { stacked: true, ticks: { color: '#fff' } },
+        y: { 
+          stacked: true,
+          ticks: { 
+            callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k',
+            color: '#fff'
+          } 
+        }
+      },
+      plugins: { legend: { position: 'bottom' } }
     }
   });
-  
-  // Store categories for drilldown
-  window.categoryData = { monthData, allData, categories };
 }
 
 function renderQOLTable(allData, currentMonth) {
@@ -684,82 +637,6 @@ function switchBreakdown(type) {
   }
 }
 
-function handlePieClick() {
-  const canvasElement = document.getElementById('expensePieChart');
-  const canvasPosition = Chart.helpers.getRelativePosition(event, charts.pie.chart);
-  const dataX = charts.pie.scales.x ? charts.pie.scales.x.getValueForPixel(canvasPosition.x) : 0;
-  const dataPoints = charts.pie.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
-  
-  if (dataPoints.length > 0 && window.categoryData) {
-    const index = dataPoints[0].index;
-    const category = Object.keys(window.categoryData.categories)[index];
-    drillDownCategory(category);
-  }
-}
-
-function drillDownCategory(category) {
-  drilldownState = category;
-  document.getElementById('drilldownCard').style.display = 'block';
-  document.getElementById('drilldownInfo').textContent = `Click category to view items`;
-  
-  const allData = window.categoryData.allData;
-  const month = currentMonth;
-  let items = [];
-  let chartType = 'doughnut';
-  
-  if (category === 'Subscriptions') {
-    items = (allData.subscriptions[month] || []).map(s => ({ name: s.name, value: s.cost }));
-  } else if (category === 'QOL Items') {
-    items = (allData.qolItems[month] || []).map(q => ({ name: q.name, value: q.cost }));
-  } else if (category === 'Installments') {
-    items = (allData.otherExpenses[month] || []).map(o => ({ name: o.name, value: o.cost }));
-  } else {
-    items = [{ name: category, value: window.categoryData.categories[category] }];
-  }
-  
-  renderDrilldownChart(category, items);
-}
-
-function renderDrilldownChart(category, items) {
-  document.getElementById('drilldownTitle').textContent = `${category} Breakdown`;
-  
-  const ctx = document.getElementById('drilldownChart').getContext('2d');
-  if (charts.drilldown) charts.drilldown.destroy();
-  
-  const colors_array = ['#0099ff', '#00d084', '#ff006e', '#ffd60a', '#ffc300', '#00b4d8', '#90e0ef'];
-  
-  charts.drilldown = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: items.map(i => i.name),
-      datasets: [{
-        data: items.map(i => i.value),
-        backgroundColor: colors_array.slice(0, items.length),
-        borderColor: 'rgba(15, 23, 42, 0.8)',
-        borderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'bottom' },
-        tooltip: {
-          callbacks: {
-            label: (ctx) => formatCurrency(ctx.parsed)
-          }
-        }
-      }
-    }
-  });
-}
-
-function clearDrilldown() {
-  drilldownState = null;
-  document.getElementById('drilldownCard').style.display = 'none';
-  if (charts.drilldown) charts.drilldown.destroy();
-}
-
 function loadDashboard() {
   const monthSelect = document.getElementById('monthSelect');
   const selectedMonth = monthSelect.value;
@@ -775,8 +652,7 @@ function loadDashboard() {
   renderIncomeExpensesChart(allData);
   renderIncomeChart(allData);
   renderExpensesChart(allData);
-  renderDiscretionaryChart(allData);
-  renderExpensePieChart(monthData, allData);
+  renderDisposableChart(allData);
   renderQOLTable(allData, selectedMonth);
   window.currentMonth = selectedMonth; // Store for switchBreakdown function
 }
