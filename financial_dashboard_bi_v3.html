@@ -380,6 +380,7 @@ function renderExpensesChart(allData) {
   
   charts.expenses = new Chart(ctx, {
     type: 'bar',
+    indexAxis: 'y',
     data: {
       labels: months.map(parseMonth),
       datasets: datasets.map(ds => ({
@@ -394,11 +395,11 @@ function renderExpensesChart(allData) {
       maintainAspectRatio: false,
       stacked: true,
       plugins: {
-        legend: { position: 'bottom' },
-        tooltip: { callbacks: { label: (ctx) => formatCurrency(ctx.parsed.y) } }
+        legend: { position: 'bottom', labels: { color: '#fff' } },
+        tooltip: { callbacks: { label: (ctx) => formatCurrency(ctx.parsed.x) }, backgroundColor: 'rgba(0,0,0,0.7)' }
       },
       scales: {
-        y: { ticks: { callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k' } }
+        x: { ticks: { callback: (v) => '฿' + (v / 1000).toFixed(0) + 'k', color: '#999' }, stacked: true }
       }
     }
   });
